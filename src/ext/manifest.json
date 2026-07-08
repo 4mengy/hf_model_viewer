@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "LLM 架构与显存计算器",
+  "version": "1.0.0",
+  "description": "零下载解析 Hugging Face 模型拓扑，并提供动态显存（VRAM）计算。支持 MoE 与 DeepSeek MLA 架构。",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://huggingface.co/*",
+    "https://cdn-lfs.huggingface.co/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LLM 架构与显存计算器"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}

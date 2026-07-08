@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Build output (both distribution targets)
+dist-web/
+dist-ext/
+
+# Project data / local state
+.workbuddy/
+
+# Editor / OS noise
+.DS_Store
+*.log

@@ -1,0 +1,19 @@
+{
+  "name": "hf-vram-estimator",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "LLM 架构与显存计算器 — 纯前端双形态分发（GitHub Pages + 浏览器扩展）",
+  "scripts": {
+    "dev": "BUILD_TARGET=web vite",
+    "build:web": "BUILD_TARGET=web vite build",
+    "build:ext": "BUILD_TARGET=ext vite build",
+    "preview": "BUILD_TARGET=web vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.6"
+  }
+}
