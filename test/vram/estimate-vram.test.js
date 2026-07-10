@@ -52,6 +52,7 @@ test('Verified Profile details flow through the complete VRAM Estimate and ignor
   assert.equal('vOverhead' in fp16, false);
   assert.equal('overheadGB' in fp16.breakdown, false);
   assert.equal(fp16.composition.some((item) => item.key === 'overhead'), false);
+  assert.deepEqual(fp16.composition.find((item) => item.key === 'kv').dtypes, ['BF16']);
 });
 
 test('Complete VRAM Estimate forwards ragged sequence lengths to the Profile', () => {
@@ -80,7 +81,7 @@ test('weight composition merges Tensor Name Patterns and sorts them by size', ()
         {
           name: 'language_model.model.layers.1.self_attn.k_norm.weight',
           shape: [3],
-          dtype: 'BF16',
+          dtype: 'F32',
         },
         {
           name: 'language_model.model.layers.0.self_attn.q_proj.weight',
@@ -94,10 +95,10 @@ test('weight composition merges Tensor Name Patterns and sorts them by size', ()
   const weights = result.composition.filter((item) => item.group === 'weight');
   assert.equal(result.composition.some((item) => item.key === 'overhead'), false);
   assert.deepEqual(
-    weights.map((item) => [item.label, item.gb]),
+    weights.map((item) => [item.label, item.dtypes, item.gb]),
     [
-      ['language_model.model.layers.*.self_attn.k_norm.weight', 10 / (1024 ** 3)],
-      ['language_model.model.layers.*.self_attn.q_proj.weight', 8 / (1024 ** 3)],
+      ['language_model.model.layers.*.self_attn.k_norm.weight', ['BF16', 'F32'], 10 / (1024 ** 3)],
+      ['language_model.model.layers.*.self_attn.q_proj.weight', ['BF16'], 8 / (1024 ** 3)],
     ],
   );
 });

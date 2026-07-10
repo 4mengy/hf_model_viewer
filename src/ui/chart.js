@@ -78,9 +78,14 @@ function selectableKeysPlugin(rows) {
   };
 }
 
+function compositionKeyLabel(item) {
+  const key = item.label || t(item.labelKey);
+  return item.dtypes?.length ? `${key} · ${item.dtypes.join(' / ')}` : key;
+}
+
 export function renderChart(canvas, est) {
   const comp = est.composition || [];
-  const labels = comp.map((c) => c.label || t(c.labelKey));
+  const labels = comp.map(compositionKeyLabel);
   const values = comp.map((c) => c.gb);
   const colors = comp.map((c) => COLORS[c.colorKey || c.key] || COLORS.weight);
   const valueLabels = comp.map((c) => {

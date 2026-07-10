@@ -114,13 +114,15 @@ function effBppFor(t, { targetPrecision, strategy }) {
 
 /**
  * Compute weight bytes per tensor (also produces effBppMap for tree
- * reconciliation and byTensorNamePattern for the overview chart).
- * @returns {{totalBytes:number, baseBytes:number, expertBytes:number, effBppMap:Map, byTensorNamePattern:Map}|null}
+ * reconciliation plus byte and DType indexes by Tensor Name Pattern for the
+ * overview chart).
+ * @returns {{totalBytes:number, baseBytes:number, expertBytes:number, effBppMap:Map, byTensorNamePattern:Map, dtypesByTensorNamePattern:Map}|null}
  */
 export function computeWeightBytes(tensors, opts = {}) {
   if (!Array.isArray(tensors) || !tensors.length) return null;
   const map = new Map();
   const byTensorNamePattern = new Map();
+  const dtypesByTensorNamePattern = new Map();
   let totalBytes = 0, baseBytes = 0, expertBytes = 0;
   for (const t of tensors) {
     const params = t.params != null ? t.params : tensorParams(t.shape);
@@ -130,11 +132,20 @@ export function computeWeightBytes(tensors, opts = {}) {
     totalBytes += b;
     const pattern = tensorNamePattern(t.name);
     byTensorNamePattern.set(pattern, (byTensorNamePattern.get(pattern) || 0) + b);
+    if (!dtypesByTensorNamePattern.has(pattern)) dtypesByTensorNamePattern.set(pattern, new Set());
+    dtypesByTensorNamePattern.get(pattern).add(t.dtype);
     const cat = categorizeTensor(t.name);
     if (cat === 'expert') expertBytes += b;
     else baseBytes += b;
   }
-  return { totalBytes, baseBytes, expertBytes, effBppMap: map, byTensorNamePattern };
+  return {
+    totalBytes,
+    baseBytes,
+    expertBytes,
+    effBppMap: map,
+    byTensorNamePattern,
+    dtypesByTensorNamePattern,
+  };
 }
 
 export function buildEffBppMap(tensors, opts) {
@@ -194,12 +205,16 @@ export function estimateVRAM(
   const composition = [];
   if (w) {
     for (const [key, bytes] of w.byTensorNamePattern) {
-      composition.push({ key, label: key, colorKey: 'weight', group: 'weight', gb: bytes / GB });
+      const dtypes = [...w.dtypesByTensorNamePattern.get(key)].sort();
+      composition.push({ key, label: key, dtypes, colorKey: 'weight', group: 'weight', gb: bytes / GB });
     }
   } else {
-    composition.push({ key: 'weight', labelKey: 'cat.weight', colorKey: 'weight', group: 'weight', gb: vWeights });
+    composition.push({ key: 'weight', labelKey: 'cat.weight', dtypes: [], colorKey: 'weight', group: 'weight', gb: vWeights });
   }
-  if (complete) composition.push({ key: 'kv', labelKey: 'cat.kv', colorKey: 'kv', group: 'kv', gb: vKV });
+  if (complete) {
+    const dtypes = [...new Set(kv.buffers.map((buffer) => buffer.dtype))].sort();
+    composition.push({ key: 'kv', labelKey: 'cat.kv', dtypes, colorKey: 'kv', group: 'kv', gb: vKV });
+  }
   composition.sort((a, b) => b.gb - a.gb || a.key.localeCompare(b.key));
 
   // Chart decomposition (already uses per-tensor effective bytes).
