@@ -54,7 +54,6 @@ const STR = {
   'ov.title': { zh: '总览', en: 'Overview' },
   'ov.treeTitle': { zh: '张量名称树', en: 'Tensor name tree' },
   'ov.treeEmpty': { zh: '输入仓库 ID 并点击 Analyze 开始解析', en: 'Enter a repo ID and click Analyze to start parsing' },
-  'ov.compTitle': { zh: '组成明细', en: 'Composition breakdown' },
   'ov.kvTitle': { zh: 'KV Cache 审计明细', en: 'KV Cache audit details' },
   'ctl.empty': { zh: '尚未分析', en: 'Not analyzed yet' },
 

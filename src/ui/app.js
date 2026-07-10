@@ -1,7 +1,7 @@
 /* ui/app.js — App orchestration (shared by web & extension)
  * ------------------------------------------------------------
  * Two-column layout: left = config & calc controls, right = results.
- * Pipeline: analyze -> buildTree -> estimateVRAM -> tree + chart + breakdown.
+ * Pipeline: analyze -> buildTree -> estimateVRAM -> tree + overview.
  * Web and extension share this logic; only the mount entry differs.
  * Language: strings come from i18n (t); switching re-paints the shell.
  * ------------------------------------------------------------ */
@@ -12,7 +12,7 @@ import { buildTensorNameTree, buildTree, groupRepeatedTensorSubtrees } from '../
 import { estimateVRAM, buildEffBppMap } from '../vram/index.js';
 import { renderTree, updateTreeBytes } from './treeView.js';
 import { renderChart, COLORS } from './chart.js';
-import { fmtNum, fmtGB, esc } from './format.js';
+import { fmtGiBAuto, fmtNum, fmtGB, esc } from './format.js';
 import { t, getLang, setLang, onLangChange } from '../i18n.js';
 
 // Read model max context length: prefer max_position_embeddings, fall back
@@ -88,10 +88,11 @@ function buildLayout() {
     <section class="overview">
       <h2>${esc(t('ov.title'))}</h2>
       <div class="summary-grid" id="stats"><div class="empty">${esc(t('ctl.empty'))}</div></div>
-      <canvas id="chart"></canvas>
-      <h3 class="comp-title">${esc(t('ov.compTitle'))}</h3>
-      <div id="comp" class="comp-wrap"><div class="empty">${esc(t('ctl.empty'))}</div></div>
-      <h3 class="comp-title">${esc(t('ov.kvTitle'))}</h3>
+      <div class="overview-visuals">
+        <div class="overview-chart"><canvas id="chart"></canvas></div>
+        <div id="comp" class="comp-wrap"><div class="empty">${esc(t('ctl.empty'))}</div></div>
+      </div>
+      <h3 class="overview-section-title">${esc(t('ov.kvTitle'))}</h3>
       <div id="kvdetails" class="kv-details"><div class="empty">${esc(t('ctl.empty'))}</div></div>
     </section>
     <section class="tree">
@@ -144,7 +145,7 @@ export function mountApp(rootEl) {
     });
 
     renderChart($('chart'), est);
-    renderComposition(est);
+    renderOverviewComposition(est);
     renderKVDetails(est);
     updateTreeBytes($('tree'), state.tensorNameTree, buildEffMap());
 
@@ -218,8 +219,7 @@ export function mountApp(rootEl) {
       <details class="kv-evidence"><summary>${esc(t('kv.evidence'))}</summary><ul>${evidence}</ul></details>`;
   }
 
-  // Overview "composition breakdown": group rows by category with size & share.
-  function renderComposition(est) {
+  function renderOverviewComposition(est) {
     const compEl = $('comp');
     if (!est.composition || !est.composition.length) {
       compEl.innerHTML = `<div class="empty">${esc(t('ctl.empty'))}</div>`;
@@ -237,11 +237,11 @@ export function mountApp(rootEl) {
       const items = est.composition.filter((c) => c.group === g.key);
       if (!items.length) continue;
       const sub = items.reduce((s, c) => s + c.gb, 0);
-      html += `<div class="comp-group"><div class="comp-ghead"><span>${esc(g.title)}</span><b>${fmtGB(sub)}</b></div>`;
+      html += `<div class="comp-group"><div class="comp-ghead"><span>${esc(g.title)}</span><b>${fmtGiBAuto(sub)}</b></div>`;
       for (const it of items) {
         const pct = total > 0 ? (it.gb / total) * 100 : null;
         const color = COLORS[it.key] || '#94a3b8';
-        html += `<div class="comp-row"><span class="dot" style="background:${color}"></span><span class="comp-name">${esc(t(it.labelKey))}</span><span class="comp-val">${fmtGB(it.gb)}${pct == null ? '' : ` · ${pct.toFixed(1)}%`}</span></div>`;
+        html += `<div class="comp-row"><span class="dot" style="background:${color}"></span><span class="comp-name">${esc(t(it.labelKey))}</span><span class="comp-val">${fmtGiBAuto(it.gb)}${pct == null ? '' : ` · ${pct.toFixed(1)}%`}</span></div>`;
       }
       html += '</div>';
     }

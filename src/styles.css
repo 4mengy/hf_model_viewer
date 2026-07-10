@@ -227,7 +227,14 @@ input[type="range"] { width: 100%; accent-color: var(--primary); }
 }
 .overview h2, .tree h2 { margin: 0 0 12px; font-size: 15px; }
 .overview canvas { max-height: 320px; }
-.comp-title { margin: 18px 0 8px; font-size: 14px; color: var(--text); border-top: 1px dashed var(--border); padding-top: 12px; }
+.overview-visuals {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+  gap: 16px;
+  align-items: start;
+}
+.overview-chart { min-width: 0; }
+.overview-section-title { margin: 18px 0 8px; font-size: 14px; color: var(--text); border-top: 1px dashed var(--border); padding-top: 12px; }
 .comp-wrap { font-size: 13px; }
 .comp-wrap .empty { color: var(--muted); }
 .comp { display: flex; flex-direction: column; gap: 10px; }
@@ -238,6 +245,10 @@ input[type="range"] { width: 100%; accent-color: var(--primary); }
 .comp-row .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .comp-name { flex: 1; color: var(--text); }
 .comp-val { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+@media (max-width: 1050px) {
+  .overview-visuals { grid-template-columns: 1fr; }
+}
 
 .tree {
   background: var(--panel);

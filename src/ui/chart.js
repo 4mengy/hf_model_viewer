@@ -4,8 +4,9 @@
 
 import Chart from 'chart.js/auto';
 import { t } from '../i18n.js';
+import { fmtGiBAuto } from './format.js';
 
-// Per-category colors; reused by the "composition breakdown" list in app.js
+// Per-category colors; reused by the overview data list in app.js
 // so the chart and the text stay visually consistent.
 export const COLORS = {
   embedding: '#2563eb',
@@ -51,7 +52,7 @@ export function renderChart(canvas, est) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (ctx) => ` ${ctx.parsed.x.toFixed(3)} GB`,
+            label: (ctx) => ` ${fmtGiBAuto(ctx.parsed.x)}`,
           },
         },
       },
