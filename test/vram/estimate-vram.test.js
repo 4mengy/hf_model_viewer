@@ -63,7 +63,7 @@ test('Complete VRAM Estimate forwards ragged sequence lengths to the Profile', (
   assert.equal(result.kvBuffers.reduce((sum, buffer) => sum + buffer.bytes, 0), 6 * 95_232);
 });
 
-test('weight composition merges standalone numeric tensor-name segments and sorts by size', () => {
+test('weight composition merges Tensor Name Patterns and sorts them by size', () => {
   const result = estimateVRAM(
     { architectures: ['UnknownForCausalLM'] },
     { totalParams: 10, baseParams: 10, expertParams: 0 },

@@ -55,3 +55,7 @@ _Avoid_: Layer ID, Expert ID, architecture inference
 **Repeated Tensor Group**:
 A bottom-up display group of numeric sibling subtrees whose normalized relative keys, terminal Shapes, and terminal DTypes are identical; one representative is displayed with its repeat count and IDs relative to the current parent, while parameters and bytes include every original tensor across ancestor repetitions. The public `groupRepeatedTensorSubtrees` operation creates these groups.
 _Avoid_: Architecture-based grouping, representative-only VRAM, shape-only grouping
+
+**Tensor Name Pattern**:
+A presentation-only aggregation identity for tensors whose dot-delimited names differ only in standalone non-negative integer segments, represented by `*`; unlike a Repeated Tensor Group, it does not require matching terminal Shapes or DTypes.
+_Avoid_: Repeated Tensor Group, Tensor category, architecture grouping

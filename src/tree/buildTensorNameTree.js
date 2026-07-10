@@ -1,6 +1,4 @@
-function isNumericSegment(segment) {
-  return /^(?:0|[1-9]\d*)$/.test(segment);
-}
+import { isNumericPathSegment } from './pathSegments.js';
 
 function toTreeNode(node) {
   const children = [...node.childMap.values()].map(toTreeNode);
@@ -34,7 +32,7 @@ export function buildTensorNameTree(tensors) {
         node.childMap.set(segment, {
           segment,
           prefix,
-          numeric: isNumericSegment(segment),
+          numeric: isNumericPathSegment(segment),
           childMap: new Map(),
           tensors: [],
         });

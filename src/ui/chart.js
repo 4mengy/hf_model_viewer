@@ -1,5 +1,5 @@
 /* ui/chart.js — Tensor-name VRAM horizontal bar chart (Chart.js)
- * Renders normalized tensor-name totals plus KV / overhead, largest first. */
+ * Renders Tensor Name Pattern totals plus KV / overhead, largest first. */
 
 import Chart from 'chart.js/auto';
 import { t } from '../i18n.js';
