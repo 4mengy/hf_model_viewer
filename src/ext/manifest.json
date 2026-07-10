@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "LLM Architecture & VRAM Calculator",
   "version": "1.0.0",
-  "description": "Zero-download parsing of Hugging Face model topology with dynamic VRAM estimation. Supports MoE and DeepSeek MLA / DSA architectures.",
+  "description": "Zero-download model topology parsing with verified KV Cache Profiles for GLM 5.2, DeepSeek V4 Pro, and Hy3.",
   "permissions": ["storage"],
   "host_permissions": [
     "https://huggingface.co/*",

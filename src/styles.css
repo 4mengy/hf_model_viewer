@@ -199,6 +199,7 @@ input[type="range"] { width: 100%; accent-color: var(--primary); }
   background: #fff;
 }
 .summary .hw-note { font-size: 12px; color: var(--muted); }
+.summary .incomplete { color: var(--red); margin-top: 6px; }
 
 .status {
   margin-top: 14px;
@@ -332,7 +333,30 @@ table.ops code {
 .tag.mha { background: #f1f5f9; color: #475569; }
 .tag.gqa { background: #dcfce7; color: #15803d; }
 .tag.mqa { background: #cffafe; color: #0e7490; }
+.tag.profile { background: #e0e7ff; color: #3730a3; font-weight: 700; }
+.tag.verified { background: var(--green-bg); color: var(--green); font-weight: 700; }
 .dsa-note { color: #b45309; background: #fffbeb; border: 1px dashed #fcd34d; border-radius: 6px; padding: 6px 8px; margin-top: 6px; }
+
+.kv-details { font-size: 12px; }
+.kv-unknown { border: 1px solid #fecaca; background: #fff7f7; color: #991b1b; border-radius: 8px; padding: 12px; display: grid; gap: 5px; }
+.kv-unknown code, .kv-profile-head code, .kv-layout-id code { margin-left: 8px; color: var(--muted); }
+.kv-mismatch { color: var(--muted); word-break: break-word; }
+.kv-profile-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.kv-profile-head b { font-size: 14px; }
+.kv-layout-id { color: var(--muted); margin-bottom: 10px; }
+.kv-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+.kv-table { width: 100%; min-width: 940px; border-collapse: collapse; }
+.kv-table th, .kv-table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.kv-table thead th { color: var(--muted); background: #f8fafc; white-space: nowrap; }
+.kv-table tbody td:first-child code, .kv-table td small { display: block; color: var(--muted); margin-top: 3px; }
+.kv-table td.num, .kv-table th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kv-table td.num span, .kv-table th.num span { color: var(--muted); }
+.kv-table tfoot th { border-bottom: 0; background: #f8fafc; }
+.kv-evidence { margin-top: 10px; }
+.kv-evidence summary { cursor: pointer; font-weight: 600; }
+.kv-evidence ul { margin: 8px 0 0; padding-left: 20px; }
+.kv-evidence li { margin: 4px 0; }
+.kv-evidence code { display: block; color: var(--muted); font-size: 10px; }
 
 /* Narrow screens (incl. extension Popup) / responsive: stack columns */
 @media (max-width: 820px) {

@@ -23,8 +23,8 @@ const STR = {
 
   // Controls
   'ctl.repoPlaceholder': {
-    zh: 'org/repo，如 Qwen/Qwen2.5-7B-Instruct',
-    en: 'org/repo, e.g. Qwen/Qwen2.5-7B-Instruct',
+    zh: 'org/repo，如 tencent/Hy3',
+    en: 'org/repo, e.g. tencent/Hy3',
   },
   'ctl.analyze': { zh: '分析', en: 'Analyze' },
   'ctl.advanced': { zh: '高级（受限模型可选 Token）', en: 'Advanced (token for gated models)' },
@@ -55,6 +55,7 @@ const STR = {
   'ov.treeTitle': { zh: '层级结构树', en: 'Layer structure tree' },
   'ov.treeEmpty': { zh: '输入仓库 ID 并点击 Analyze 开始解析', en: 'Enter a repo ID and click Analyze to start parsing' },
   'ov.compTitle': { zh: '组成明细', en: 'Composition breakdown' },
+  'ov.kvTitle': { zh: 'KV Cache 审计明细', en: 'KV Cache audit details' },
   'ctl.empty': { zh: '尚未分析', en: 'Not analyzed yet' },
 
   // Result summary card
@@ -63,8 +64,28 @@ const STR = {
   'sum.kv': { zh: 'KV', en: 'KV' },
   'sum.overhead': { zh: '开销', en: 'Overhead' },
   'sum.weightStrategy': { zh: '权重策略：', en: 'Weight strategy: ' },
-  'sum.attnArch': { zh: '注意力架构：', en: 'Attention arch: ' },
-  'sum.kvFormula': { zh: 'KV 公式：', en: 'KV formula: ' },
+  'sum.kvProfile': { zh: '模型架构档案：', en: 'Architecture Profile: ' },
+  'sum.kvLayout': { zh: 'KV 布局：', en: 'KV layout: ' },
+
+  // Verified KV Cache audit output
+  'kv.verified': { zh: '已验证', en: 'Verified' },
+  'kv.unsupported': { zh: 'KV Cache 无法验证', en: 'KV Cache could not be verified' },
+  'kv.totalUnknown': { zh: 'KV Cache 未验证，因此总显存保持未知。', en: 'KV Cache is unverified, so total VRAM remains unknown.' },
+  'kv.buffer': { zh: 'Buffer', en: 'Buffer' },
+  'kv.layers': { zh: '层组', en: 'Layer group' },
+  'kv.elements': { zh: '元素数', en: 'Elements' },
+  'kv.dtype': { zh: 'DType', en: 'DType' },
+  'kv.bytes': { zh: '字节 / GB', en: 'Bytes / GB' },
+  'kv.formula': { zh: '公式 / 证据', en: 'Formula / evidence' },
+  'kv.evidence': { zh: '第一方证据与固定 revision', en: 'First-party evidence and fixed revisions' },
+  'kv.mismatches': { zh: '未命中条件：', en: 'Unmatched conditions: ' },
+  'kv.diag.unknown': { zh: '未知诊断', en: 'Unknown diagnostic' },
+  'kv.diag.missing_model_architecture': { zh: 'config.architectures 缺失或为空', en: 'config.architectures is missing or empty' },
+  'kv.diag.unsupported_model_architecture': { zh: '模型类标识未进入人工审核目录', en: 'Model Class Identifier is not in the reviewed catalog' },
+  'kv.diag.conflicting_architecture_profiles': { zh: '多个模型类标识指向冲突的 Profile', en: 'Model Class Identifiers resolve to conflicting Profiles' },
+  'kv.diag.profile_signature_mismatch': { zh: '配置或张量签名与已审核 Profile 不一致', en: 'Config or tensor signature differs from the reviewed Profile' },
+  'kv.diag.profile_input_out_of_range': { zh: 'batch 或 context 超出 Profile 已验证范围', en: 'Batch or context is outside the Profile\'s verified range' },
+  'kv.diag.profile_calculation_out_of_range': { zh: 'KV 字节计算超出安全整数范围', en: 'KV byte calculation exceeds the safe integer range' },
 
   // Composition group titles
   'group.weight': { zh: '权重显存（稠密基础）', en: 'Weight VRAM (dense base)' },
@@ -124,43 +145,6 @@ const STR = {
   'cat.kv': { zh: 'KV Cache', en: 'KV Cache' },
   'cat.overhead': { zh: '固有开销', en: 'Fixed overhead' },
 
-  // KV formula labels (technical; values interpolated)
-  'kv.mha.tensor': { zh: 'MHA/GQA 架构（张量推导 K/V 投影维度）', en: 'MHA/GQA arch (tensor-derived K/V proj dims)' },
-  'kv.mha.tensor.detail': {
-    zh: '{arch} 架构（张量推导 K/V 维度，Hkv≈{hkv}, Dhead≈{dhead}）',
-    en: '{arch} arch (tensor-derived K/V dims, Hkv≈{hkv}, Dhead≈{dhead})',
-  },
-  'kv.mha.config': { zh: '{arch} 架构 (Hkv={hkv}, Dhead={dhead})', en: '{arch} arch (Hkv={hkv}, Dhead={dhead})' },
-  'kv.mla.tensor': { zh: 'MLA 压缩架构（张量推导 latent）', en: 'MLA compressed arch (tensor-derived latent)' },
-  'kv.mla.config': {
-    zh: 'MLA 压缩架构 (kv_lora_rank + qk_rope_head_dim)',
-    en: 'MLA compressed arch (kv_lora_rank + qk_rope_head_dim)',
-  },
-  'kv.dsa.tensor': {
-    zh: 'DSA 稀疏注意力（张量推导 latent + FP8 索引器）',
-    en: 'DSA sparse attention (tensor-derived latent + FP8 indexer)',
-  },
-  'kv.dsa.config': {
-    zh: 'DSA 稀疏注意力 (MLA latent + FP8 索引器K)',
-    en: 'DSA sparse attention (MLA latent + FP8 indexer K)',
-  },
-  'kv.dsa.note': {
-    zh: 'DSA 主要削减计算量 O(L²)→O(L·topk) 与加载带宽；KV 容量≈稠密 MLA+索引器，几乎不降。',
-    en: 'DSA mainly cuts compute O(L²)→O(L·topk) and load bandwidth; KV capacity ≈ dense MLA + indexer, barely reduced.',
-  },
-  'kv.v4.tensor': {
-    zh: 'DeepSeek-V4 NSA（张量推导 wkv 潜变量 + 逐层 compress_ratio）',
-    en: 'DeepSeek-V4 NSA (tensor-derived wkv latent + per-layer compress_ratio)',
-  },
-  'kv.v4.config': {
-    zh: 'DeepSeek-V4 NSA (head_dim / compress_ratios / window_size)',
-    en: 'DeepSeek-V4 NSA (head_dim / compress_ratios / window_size)',
-  },
-  'kv.v4.note': {
-    zh: 'DeepSeek-V4 原生稀疏注意力：每层 KV 缓存 = (滑动窗口 {window} + S/压缩比) × {hd} 潜向量（MLA 风格单潜变量，非逐头 K/V）；压缩比=4 的层额外存 (S/4) × {ihd} 的 indexer 选择缓存。默认按 BF16 估算（启用 FP8 KV 缓存约减半）。',
-    en: 'DeepSeek-V4 Native Sparse Attention: per-layer KV cache = (sliding window {window} + S/compress_ratio) × {hd} latent (MLA-style single latent, not per-head K/V); layers with compress_ratio=4 additionally store (S/4) × {ihd} indexer selection cache. Estimated at BF16 by default (enabling FP8 KV cache roughly halves it).',
-  },
-
   // Weight strategy notes
   'weight.native': {
     zh: '权重按磁盘实际 dtype 逐张量计算（已含任何预量化，滑杆精度不生效）',
@@ -186,11 +170,6 @@ const STR = {
     en: 'Failed to fetch config.json (repo may not exist or network error): ',
   },
   'err.badSafetensors': { zh: '文件 {file} 过短，不是合法的 safetensors', en: 'File {file} is too short to be a valid safetensors' },
-  'err.missingLayers': { zh: '缺少 num_hidden_layers', en: 'Missing num_hidden_layers' },
-  'err.missingAttn': { zh: '缺注意力头配置', en: 'Missing attention head config' },
-  'err.missingKvLora': { zh: '缺 kv_lora_rank', en: 'Missing kv_lora_rank' },
-  'err.missingHeadDim': { zh: '缺 head_dim，无法计算 KV 缓存', en: 'Missing head_dim; cannot compute KV cache' },
-
   // Language toggle
   'lang.label': { zh: '语言', en: 'Language' },
 };

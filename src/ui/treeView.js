@@ -9,7 +9,7 @@
  * data-keys line up 1:1 with buildByteMap.
  * ------------------------------------------------------------ */
 
-import { fmtNum, fmtGB, esc } from './format.js';
+import { fmtNum, fmtBytesGB, esc } from './format.js';
 import { tensorParams } from '../tree/buildTree.js';
 import { t } from '../i18n.js';
 
@@ -27,27 +27,34 @@ function tensorByte(tensor, map) {
  *  (same rules as at render time). */
 function buildByteMap(tree, map) {
   const m = new Map();
+  const sumTensors = (list = []) => list.reduce((sum, tensor) => {
+    const bytes = tensorByte(tensor, map);
+    m.set('t:' + tensor.name, bytes);
+    return sum + bytes;
+  }, 0);
   for (const grp of tree.nonLayer) {
-    m.set('n:' + grp.group, grp.tensors.reduce((s, tn) => s + tensorByte(tn, map), 0));
+    m.set('n:' + grp.group, sumTensors(grp.tensors));
   }
   tree.layers.forEach((layer, i) => {
     if (!layer) return;
     let layerBytes = 0;
-    const acc = (list) => {
-      layerBytes += (list || []).reduce((s, tn) => s + tensorByte(tn, map), 0);
+    const acc = (list, key) => {
+      const bytes = sumTensors(list);
+      layerBytes += bytes;
+      m.set(key, bytes);
     };
-    acc(layer.attn);
-    acc(layer.mlp);
-    acc(layer.norm);
-    acc(layer.other);
+    acc(layer.attn, `l:${i}:attn`);
+    acc(layer.mlp, `l:${i}:mlp`);
+    acc(layer.norm, `l:${i}:norm`);
+    acc(layer.other, `l:${i}:other`);
     if (layer.experts) {
       const rep = layer.experts.representative || [];
-      const eb = rep.reduce((s, tn) => s + tensorByte(tn, map), 0) * layer.experts.count;
+      const eb = sumTensors(rep) * layer.experts.count;
       layerBytes += eb;
       m.set('e:' + i, eb);
     }
     if (layer.sharedExperts) {
-      const sb = layer.sharedExperts.tensors.reduce((s, tn) => s + tensorByte(tn, map), 0);
+      const sb = sumTensors(layer.sharedExperts.tensors);
       layerBytes += sb;
       m.set('se:' + i, sb);
     }
@@ -65,7 +72,7 @@ function tensorTable(tensors, map) {
         <td>${esc(tn.shape.join('×'))}</td>
         <td>${esc(tn.dtype)}</td>
         <td class="num">${fmtNum(pCount(tn))}</td>
-        <td class="num byte-cell" data-key="t:${esc(tn.name)}">${fmtGB(tensorByte(tn, map))}</td>
+        <td class="num byte-cell" data-key="t:${esc(tn.name)}">${fmtBytesGB(tensorByte(tn, map))}</td>
       </tr>`,
     )
     .join('');
@@ -76,7 +83,7 @@ function blockHTML(title, tensors, map, key) {
   if (!tensors || !tensors.length) return '';
   const total = tensors.reduce((a, tn) => a + pCount(tn), 0);
   const bytes = tensors.reduce((a, tn) => a + tensorByte(tn, map), 0);
-  return `<details class="block"><summary>${esc(title)} <span class="meta">${fmtNum(total)} ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="${key}">${fmtGB(bytes)}</span></span></summary>${tensorTable(tensors, map)}</details>`;
+  return `<details class="block"><summary>${esc(title)} <span class="meta">${fmtNum(total)} ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="${key}">${fmtBytesGB(bytes)}</span></span></summary>${tensorTable(tensors, map)}</details>`;
 }
 
 function expertsHTML(layer, map, i) {
@@ -87,7 +94,7 @@ function expertsHTML(layer, map, i) {
   return `
     <details class="block">
       <summary>${esc(t('tree.moeExperts'))} <span class="tag moe">×${e.count}</span>
-        <span class="meta">${fmtNum(repTotal * e.count)} ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="e:${i}">${fmtGB(totalBytes)}</span></span>
+        <span class="meta">${fmtNum(repTotal * e.count)} ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="e:${i}">${fmtBytesGB(totalBytes)}</span></span>
       </summary>
       <p class="note">${esc(t('tree.expertNote', { n: e.count }))}</p>
       ${tensorTable(rep, map)}
@@ -102,7 +109,7 @@ function sharedExpertsHTML(layer, map, i) {
   return `
     <details class="block">
       <summary>${esc(t('tree.sharedExpert'))} <span class="tag shared">1</span>
-        <span class="meta">${fmtNum(total)} ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="se:${i}">${fmtGB(bytes)}</span></span>
+        <span class="meta">${fmtNum(total)} ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="se:${i}">${fmtBytesGB(bytes)}</span></span>
       </summary>
       <p class="note">${esc(t('tree.sharedExpertNote'))}</p>
       ${tensorTable(se.tensors, map)}
@@ -125,7 +132,7 @@ function layerHTML(i, layer, map) {
   if (layer.sharedExperts) {
     layerBytes += layer.sharedExperts.tensors.reduce((s, tn) => s + tensorByte(tn, map), 0);
   }
-  const meta = `<span class="meta"><b>${fmtNum(layer.layerParams)}</b> ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="l:${i}">${fmtGB(layerBytes)}</span></span>`;
+  const meta = `<span class="meta"><b>${fmtNum(layer.layerParams)}</b> ${t('tree.paramsUnit')} · <span class="byte-cell" data-key="l:${i}">${fmtBytesGB(layerBytes)}</span></span>`;
   const inner =
     blockHTML('Self-Attention', layer.attn, map, `l:${i}:attn`) +
     (layer.experts ? expertsHTML(layer, map, i) : '') +
@@ -156,6 +163,6 @@ export function updateTreeBytes(container, tree, map) {
   const bm = buildByteMap(tree, map);
   container.querySelectorAll('.byte-cell').forEach((el) => {
     const k = el.getAttribute('data-key');
-    if (bm.has(k)) el.textContent = fmtGB(bm.get(k));
+    if (bm.has(k)) el.textContent = fmtBytesGB(bm.get(k));
   });
 }

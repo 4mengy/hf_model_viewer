@@ -10,6 +10,10 @@ export function fmtGB(gb) {
   return `${gb.toFixed(2)} GB`;
 }
 
+export function fmtBytesGB(bytes) {
+  return fmtGB(bytes / (1024 ** 3));
+}
+
 export function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;',

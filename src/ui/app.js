@@ -15,16 +15,6 @@ import { renderChart, COLORS } from './chart.js';
 import { fmtNum, fmtGB, esc } from './format.js';
 import { t, getLang, setLang, onLangChange } from '../i18n.js';
 
-// Attention-arch badge labels (attnArch value -> friendly display).
-const ARCH_LABEL = {
-  mha: 'MHA',
-  gqa: 'GQA',
-  mqa: 'MQA',
-  mla: 'MLA',
-  dsa: 'DSA',
-  deepseek_v4: 'DeepSeek-V4 (NSA)',
-};
-
 // Read model max context length: prefer max_position_embeddings, fall back
 // to max_sequence_length / max_position_embedding.
 function getMaxContextLength(config) {
@@ -101,6 +91,8 @@ function buildLayout() {
       <canvas id="chart"></canvas>
       <h3 class="comp-title">${esc(t('ov.compTitle'))}</h3>
       <div id="comp" class="comp-wrap"><div class="empty">${esc(t('ctl.empty'))}</div></div>
+      <h3 class="comp-title">${esc(t('ov.kvTitle'))}</h3>
+      <div id="kvdetails" class="kv-details"><div class="empty">${esc(t('ctl.empty'))}</div></div>
     </section>
     <section class="tree">
       <h2>${esc(t('ov.treeTitle'))}</h2>
@@ -153,17 +145,77 @@ export function mountApp(rootEl) {
 
     renderChart($('chart'), est);
     renderComposition(est);
+    renderKVDetails(est);
     updateTreeBytes($('tree'), state.tree, buildEffMap());
 
     // VRAM breakdown card (no GPU recommendation).
     const summaryEl = $('summary');
     summaryEl.style.display = '';
+    const profile = est.kvProfile;
     summaryEl.innerHTML = `
       <div class="hw-note" style="font-size:13px">${esc(t('sum.total'))}<b>${fmtGB(est.vTotal)}</b> ｜ ${esc(t('sum.weights'))} ${fmtGB(est.vWeights)} ｜ KV ${est.kvUnknown ? '—' : fmtGB(est.vKV)} ｜ ${esc(t('sum.overhead'))} ${fmtGB(est.vOverhead)}</div>
       ${est.weightNote ? `<div class="hw-note">${esc(t('sum.weightStrategy'))}${esc(est.weightNote)}</div>` : ''}
-      ${est.kvFormulaLabel ? `<div class="hw-note">${esc(t('sum.attnArch'))}<span class="tag ${esc(est.attnArch)}">${esc(ARCH_LABEL[est.attnArch] || est.attnArch.toUpperCase())}</span> ｜ ${esc(t('sum.kvFormula'))}${esc(est.kvFormulaLabel)}</div>` : ''}
+      ${profile ? `<div class="hw-note">${esc(t('sum.kvProfile'))}<span class="tag profile">${esc(profile.label)}</span> ｜ ${esc(t('sum.kvLayout'))}${esc(profile.layout.id)}@${esc(profile.layout.version)}</div>` : `<div class="hw-note incomplete">${esc(t('kv.totalUnknown'))}</div>`}
       ${est.kvNote ? `<div class="hw-note dsa-note">${esc(est.kvNote)}</div>` : ''}
     `;
+  }
+
+  function diagnosticLabel(diagnostic) {
+    if (!diagnostic) return t('kv.diag.unknown');
+    const key = `kv.diag.${diagnostic.code}`;
+    const translated = t(key);
+    return translated === key ? diagnostic.code : translated;
+  }
+
+  function layerGroupLabel(group = {}) {
+    const count = Number.isFinite(group.count) ? ` × ${group.count}` : '';
+    if (Array.isArray(group.range)) return `${group.label || t('kv.layers')} ${group.range[0]}–${group.range[1]}${count}`;
+    if (Array.isArray(group.indices)) return `${group.label || t('kv.layers')} [${group.indices.join(', ')}]${count}`;
+    return `${group.label || '—'}${count}`;
+  }
+
+  function renderKVDetails(est) {
+    const el = $('kvdetails');
+    if (est.kvStatus !== 'verified' || !est.kvProfile) {
+      const diagnostic = est.kvDiagnostic;
+      const ids = diagnostic?.modelClassIdentifiers?.join(', ') || '—';
+      const mismatches = diagnostic?.details?.mismatches || [];
+      const shown = mismatches.slice(0, 12);
+      const remainder = mismatches.length - shown.length;
+      el.innerHTML = `
+        <div class="kv-unknown">
+          <b>${esc(t('kv.unsupported'))}</b>
+          <div>${esc(diagnosticLabel(diagnostic))}</div>
+          <div><code>${esc(ids)}</code></div>
+          ${shown.length ? `<div class="kv-mismatch">${esc(t('kv.mismatches'))}${shown.map(esc).join(', ')}${remainder > 0 ? ` (+${remainder})` : ''}</div>` : ''}
+        </div>`;
+      return;
+    }
+
+    const profile = est.kvProfile;
+    const rows = est.kvBuffers.map((buffer) => `
+      <tr>
+        <td><b>${esc(buffer.label)}</b><code>${esc(buffer.id)}</code></td>
+        <td>${esc(layerGroupLabel(buffer.layerGroup))}</td>
+        <td class="num">${esc(fmtNum(buffer.elements))}</td>
+        <td><code>${esc(buffer.dtype)}</code> × ${buffer.bytesPerElement}B</td>
+        <td class="num">${esc(fmtNum(buffer.bytes))} B<br><span>${esc(fmtGB(buffer.gb))}</span></td>
+        <td><code>${esc(buffer.formula)}</code><small>${esc((buffer.evidenceIds || []).join(', '))}</small></td>
+      </tr>`).join('');
+    const evidence = profile.evidence.map((item) => `
+      <li><a href="${esc(item.url)}" target="_blank" rel="noreferrer">${esc(item.label)}</a><code>${esc(item.revision)}</code></li>`).join('');
+    el.innerHTML = `
+      <div class="kv-profile-head">
+        <div><b>${esc(profile.label)}</b><code>${esc(profile.id)}@${esc(profile.version)}</code></div>
+        <span class="tag verified">${esc(t('kv.verified'))}</span>
+      </div>
+      <div class="kv-layout-id">${esc(t('sum.kvLayout'))}<code>${esc(profile.layout.id)}@${esc(profile.layout.version)}</code></div>
+      <div class="kv-table-wrap"><table class="kv-table">
+        <thead><tr><th>${esc(t('kv.buffer'))}</th><th>${esc(t('kv.layers'))}</th><th>${esc(t('kv.elements'))}</th><th>${esc(t('kv.dtype'))}</th><th>${esc(t('kv.bytes'))}</th><th>${esc(t('kv.formula'))}</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><th colspan="4">${esc(t('group.kv'))}</th><th class="num">${esc(fmtNum(est.kvBuffers.reduce((sum, buffer) => sum + buffer.bytes, 0)))} B<br><span>${esc(fmtGB(est.vKV))}</span></th><th></th></tr></tfoot>
+      </table></div>
+      <details class="kv-evidence"><summary>${esc(t('kv.evidence'))}</summary><ul>${evidence}</ul></details>`;
   }
 
   // Overview "composition breakdown": group rows by category with size & share.
@@ -173,7 +225,7 @@ export function mountApp(rootEl) {
       compEl.innerHTML = `<div class="empty">${esc(t('ctl.empty'))}</div>`;
       return;
     }
-    const total = est.vTotal || 1;
+    const total = est.complete ? est.vTotal : null;
     const groups = [
       { key: 'weight', title: t('group.weight') },
       { key: 'moe', title: t('group.moe') },
@@ -187,9 +239,9 @@ export function mountApp(rootEl) {
       const sub = items.reduce((s, c) => s + c.gb, 0);
       html += `<div class="comp-group"><div class="comp-ghead"><span>${esc(g.title)}</span><b>${fmtGB(sub)}</b></div>`;
       for (const it of items) {
-        const pct = (it.gb / total) * 100;
+        const pct = total > 0 ? (it.gb / total) * 100 : null;
         const color = COLORS[it.key] || '#94a3b8';
-        html += `<div class="comp-row"><span class="dot" style="background:${color}"></span><span class="comp-name">${esc(t(it.labelKey))}</span><span class="comp-val">${fmtGB(it.gb)} · ${pct.toFixed(1)}%</span></div>`;
+        html += `<div class="comp-row"><span class="dot" style="background:${color}"></span><span class="comp-name">${esc(t(it.labelKey))}</span><span class="comp-val">${fmtGB(it.gb)}${pct == null ? '' : ` · ${pct.toFixed(1)}%`}</span></div>`;
       }
       html += '</div>';
     }

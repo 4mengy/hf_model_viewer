@@ -3,24 +3,13 @@
  * Math model (Spec §4):
  *   Vtotal = Vweights + Vkv_cache + Voverhead
  *   Vweights = Σparams × B_precision / 1024^3
- *   Vkv_cache = 4·B·S·L·Hkv·Dhead / 1024^3   (MHA/GQA/MQA)
- *   Vkv_cache = 2·B·S·L·(kv_lora_rank + qk_rope_head_dim) / 1024^3   (MLA)
- *   Vkv_cache = B·S·L·[ 2·(kv_lora_rank + qk_rope_head_dim) + index_head_dim ] / 1024^3   (DSA)
+ *   Vkv_cache = Σ verified Architecture Profile buffer bytes / 1024^3
  *   Voverhead = 2.0 + Vweights × 10%
  *
- * [Generic approach] KV Cache is derived primarily from the parsed
- *   safetensors tensor SHAPES (see kv/ dir: detect.js detects the arch and
- *   mha/mla/dsa compute it). Each vendor names attention hyper-params
- *   differently (num_hidden_layers vs num_layers; num_key_value_heads vs
- *   multi_query_group_num; head_dim vs kv_channels …), but "KV elements
- *   stored per token per layer" equals the sum of K/V projection output dims
- *   — a vendor-neutral ground truth, and the layer count L comes from tensor
- *   name indices. Only DeepSeek DSA's extra "indexer cache" needs one stable
- *   field. When shape-based derivation fails (e.g. fused QKV in ChatGLM /
- *   GPT-NeoX) we fall back to config hyper-params.
- *
- * Design principle: the estimator counts only tensors that LAND in VRAM,
- *   not quantities involved in compute (e.g. DSA top-k is excluded).
+ * KV Cache is fail-closed. A curated model-class catalog selects one
+ * Architecture Profile; that profile validates its full config+safetensors
+ * signature before its dedicated layout returns an auditable buffer list.
+ * Unknown or mismatched profiles keep KV and total VRAM unknown.
  * ------------------------------------------------------------ */
 
 const GB = 1024 ** 3;
@@ -183,25 +172,14 @@ export function estimateVRAM(
     weightNote = t('weight.uniform');
   }
 
-  let attnArch = 'mha';
-  let vKV = null;
-  let kvFormulaLabel = '';
-  let kvNote = '';
-  let kvUnknown = false;
-  let kvMethod = 'config';
-
-  // KV Cache derivation delegated to kv/ module: tensor path first, config fallback.
-  const kv = computeKV({ config, tensors, precision, batch, seq });
-  vKV = kv.vKV;
-  attnArch = kv.attnArch ?? 'mha';
-  kvFormulaLabel = kv.formulaLabel || '';
-  kvNote = kv.note || '';
-  kvUnknown = !!kv.kvUnknown;
-  kvMethod = kv.kvMethod || 'config';
+  const kv = computeKV({ config, tensors, batch, seq });
+  const vKV = kv.vKV;
+  const kvNote = kv.note || '';
+  const kvUnknown = !!kv.kvUnknown;
 
   const vOverhead = 2.0 + vWeights * 0.1;
-  const vKVsafe = vKV ?? 0;
-  const vTotal = vWeights + vKVsafe + vOverhead;
+  const complete = !kvUnknown && Number.isFinite(vKV);
+  const vTotal = complete ? vWeights + vKV + vOverhead : null;
 
   // Fine-grained composition (for overview breakdown): split weights by
   // tensor category, then add KV / overhead.
@@ -228,23 +206,24 @@ export function estimateVRAM(
   } else {
     composition.push({ key: 'weight', labelKey: 'cat.weight', group: 'weight', gb: vWeights });
   }
-  composition.push({ key: 'kv', labelKey: 'cat.kv', group: 'kv', gb: vKVsafe });
+  if (complete) composition.push({ key: 'kv', labelKey: 'cat.kv', group: 'kv', gb: vKV });
   composition.push({ key: 'overhead', labelKey: 'cat.overhead', group: 'overhead', gb: vOverhead });
 
   // Chart decomposition (already uses per-tensor effective bytes).
   return {
     precision,
+    complete,
+    kvStatus: kv.status,
+    kvProfile: kv.profile,
+    kvBuffers: kv.buffers || [],
+    kvDiagnostic: kv.diagnostic || null,
     bpp,
     totalParams,
     vWeights,
     weightNote,
     vKV,
     kvUnknown,
-    kvFormulaLabel,
     kvNote,
-    kvMethod,
-    attnArch,
-    isMLA: attnArch === 'mla',
     vOverhead,
     vTotal,
     composition,
