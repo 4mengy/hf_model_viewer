@@ -1,7 +1,6 @@
 /* i18n.js — Internationalization (zh / en)
  * ------------------------------------------------------------
- * Shared by both the web and the extension builds. No DOM
- * dependency except optional localStorage (guarded) and navigator.
+ * No DOM dependency except optional localStorage (guarded) and navigator.
  *
  * Usage:
  *   import { t, getLang, setLang, onLangChange } from '../i18n.js';
@@ -13,8 +12,8 @@
 const STR = {
   // Brand
   'brand.title': {
-    zh: 'LLM 架构与显存计算器',
-    en: 'LLM Architecture & VRAM Calculator',
+    zh: 'LLM VRAM 计算器 - 零下载 GPU 显存估算工具',
+    en: 'LLM VRAM Calculator - Zero-Download GPU Memory Estimator',
   },
   'brand.sub': {
     zh: '零下载解析 · 动态 VRAM 计算 · 双形态分发',

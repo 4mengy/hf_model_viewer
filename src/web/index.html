@@ -3,7 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LLM Architecture & VRAM Calculator</title>
+
+    <title>LLM VRAM Calculator — Zero-Download GPU Memory Estimator for Hugging Face Models</title>
+    <meta name="description" content="Estimate GPU VRAM requirements for any Hugging Face LLM without downloading weights. Parses model topology from safetensors headers via HTTP Range requests. Verified KV Cache profiles for DeepSeek V4 Pro, GLM 5.2, and Hunyuan 3." />
+    <meta name="keywords" content="LLM VRAM calculator, GPU memory estimator, Hugging Face model analyzer, KV cache calculation, DeepSeek V4 Pro VRAM, GLM 5.2 VRAM, Hunyuan 3 VRAM, MoE model memory, safetensors parser" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="LLM VRAM Calculator — Zero-Download GPU Memory Estimator" />
+    <meta property="og:description" content="Estimate GPU VRAM for any Hugging Face LLM without downloading weights. Verified KV Cache profiles for DeepSeek V4 Pro, GLM 5.2, and Hy3." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://4mengy.github.io/hf_view/" />
+    <meta property="og:locale" content="zh_CN" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://4mengy.github.io/hf_view/" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "LLM VRAM Calculator",
+      "description": "Estimate GPU VRAM requirements for any Hugging Face LLM without downloading weights.",
+      "url": "https://4mengy.github.io/hf_view/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web Browser",
+      "inLanguage": ["zh-CN", "en"],
+      "about": {
+        "@type": "SoftwareApplication",
+        "name": "LLM VRAM Calculator",
+        "applicationCategory": "Machine Learning Tool"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -1,8 +1,7 @@
-/* ui/app.js — App orchestration (shared by web & extension)
+/* ui/app.js — App orchestration
  * ------------------------------------------------------------
  * Two-column layout: left = config & calc controls, right = results.
  * Pipeline: analyze -> buildTree -> estimateVRAM -> tree + overview.
- * Web and extension share this logic; only the mount entry differs.
  * Language: strings come from i18n (t); switching re-paints the shell.
  * ------------------------------------------------------------ */
 

@@ -3,13 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Zero-download LLM architecture and VRAM estimator for GitHub Pages and browser extensions",
+  "description": "Zero-download LLM architecture and VRAM estimator",
   "scripts": {
-    "dev": "BUILD_TARGET=web vite",
+    "dev": "vite",
     "test": "node --no-warnings --test test/vram/*.test.js test/tree/*.test.js",
-    "build:web": "BUILD_TARGET=web vite build",
-    "build:ext": "BUILD_TARGET=ext vite build",
-    "preview": "BUILD_TARGET=web vite preview"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "vite": "^5.4.10"
