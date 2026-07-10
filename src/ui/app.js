@@ -53,9 +53,12 @@ function buildLayout() {
     <div class="field">
       <label>${esc(t('ctl.contextLength'))}</label>
       <div class="chips">
+        <button data-seq="1024">1K</button>
         <button data-seq="8192">8K</button>
-        <button data-seq="32768">32K</button>
+        <button data-seq="65536">64K</button>
         <button data-seq="131072">128K</button>
+        <button data-seq="524288">512K</button>
+        <button data-seq="1048576">1M</button>
       </div>
       <input type="number" id="seq" class="seq-input" value="8192" min="1024" max="131072" />
     </div>
