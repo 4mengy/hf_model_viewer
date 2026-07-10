@@ -1,5 +1,5 @@
 /* ui/chart.js — Tensor-name VRAM horizontal bar chart (Chart.js)
- * Renders Tensor Name Pattern totals plus KV / overhead, largest first. */
+ * Renders Tensor Name Pattern totals plus KV, largest first. */
 
 import Chart from 'chart.js/auto';
 import { t } from '../i18n.js';
@@ -7,13 +7,15 @@ import { fmtGiBAuto } from './format.js';
 
 const COLORS = {
   kv: '#db2777',
-  overhead: '#94a3b8',
   weight: '#2563eb',
 };
 
 const KEY_ROW_HEIGHT = 34;
 const AXIS_SPACE_HEIGHT = 56;
 const MAX_VISIBLE_KEYS = 10;
+const MIN_KEY_COLUMN_WIDTH = 180;
+const MAX_KEY_COLUMN_WIDTH = 640;
+const APPROX_KEY_CHARACTER_WIDTH = 7;
 
 let instance = null;
 
@@ -35,6 +37,47 @@ const valueLabelsPlugin = {
   },
 };
 
+function renderSelectableKeys(canvas, labels) {
+  const content = canvas.closest('.overview-chart-content');
+  const container = content?.querySelector('.overview-chart-keys');
+  if (!container) return { content: canvas.parentElement, container: null, rows: [] };
+
+  const keyWidth = Math.min(
+    MAX_KEY_COLUMN_WIDTH,
+    Math.max(MIN_KEY_COLUMN_WIDTH, ...labels.map((label) => label.length * APPROX_KEY_CHARACTER_WIDTH)),
+  );
+  content.style.setProperty('--overview-chart-key-width', `${keyWidth}px`);
+
+  const rows = labels.map((label) => {
+    const row = canvas.ownerDocument.createElement('span');
+    row.className = 'overview-chart-key';
+    row.setAttribute('role', 'listitem');
+    row.title = label;
+    const input = canvas.ownerDocument.createElement('input');
+    input.className = 'overview-chart-key-text';
+    input.type = 'text';
+    input.readOnly = true;
+    input.value = label;
+    input.setAttribute('aria-label', label);
+    row.append(input);
+    return row;
+  });
+  container.replaceChildren(...rows);
+  return { content, container, rows };
+}
+
+function selectableKeysPlugin(rows) {
+  return {
+    id: 'selectableCompositionKeys',
+    afterDatasetsDraw(chart) {
+      const bars = chart.getDatasetMeta(0).data;
+      rows.forEach((row, index) => {
+        if (bars[index]) row.style.top = `${bars[index].y}px`;
+      });
+    },
+  };
+}
+
 export function renderChart(canvas, est) {
   const comp = est.composition || [];
   const labels = comp.map((c) => c.label || t(c.labelKey));
@@ -46,7 +89,7 @@ export function renderChart(canvas, est) {
   });
 
   if (instance) instance.destroy();
-  const content = canvas.parentElement;
+  const { content, rows } = renderSelectableKeys(canvas, labels);
   const viewport = content.parentElement;
   content.style.height = '';
   const contentHeight = Math.max(content.clientHeight, comp.length * KEY_ROW_HEIGHT + AXIS_SPACE_HEIGHT);
@@ -67,7 +110,7 @@ export function renderChart(canvas, est) {
         },
       ],
     },
-    plugins: [valueLabelsPlugin],
+    plugins: [valueLabelsPlugin, selectableKeysPlugin(rows)],
     options: {
       indexAxis: 'y',
       responsive: true,
@@ -83,7 +126,9 @@ export function renderChart(canvas, est) {
       },
       scales: {
         y: {
-          ticks: { autoSkip: false },
+          ticks: { display: false, autoSkip: false },
+          grid: { display: false },
+          border: { display: false },
         },
         x: {
           beginAtZero: true,

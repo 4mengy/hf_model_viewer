@@ -61,7 +61,6 @@ const STR = {
   'sum.total': { zh: '总显存需求：', en: 'Total VRAM: ' },
   'sum.weights': { zh: '权重', en: 'Weights' },
   'sum.kv': { zh: 'KV', en: 'KV' },
-  'sum.overhead': { zh: '开销', en: 'Overhead' },
   'sum.weightStrategy': { zh: '权重策略：', en: 'Weight strategy: ' },
   'sum.kvProfile': { zh: '模型架构档案：', en: 'Architecture Profile: ' },
   'sum.kvLayout': { zh: 'KV 布局：', en: 'KV layout: ' },
@@ -90,7 +89,6 @@ const STR = {
   'group.weight': { zh: '权重显存（稠密基础）', en: 'Weight VRAM (dense base)' },
   'group.moe': { zh: 'MoE 专家层', en: 'MoE expert layers' },
   'group.kv': { zh: 'KV Cache', en: 'KV Cache' },
-  'group.overhead': { zh: '固有开销', en: 'Fixed overhead' },
 
   // Stats grid
   'stat.totalParams': { zh: '总参数', en: 'Total params' },
@@ -136,7 +134,6 @@ const STR = {
   'cat.sharedExpert': { zh: '共享专家（始终激活）', en: 'Shared expert (always active)' },
   'cat.weight': { zh: '权重（未细分）', en: 'Weights (unsplit)' },
   'cat.kv': { zh: 'KV Cache', en: 'KV Cache' },
-  'cat.overhead': { zh: '固有开销', en: 'Fixed overhead' },
 
   // Weight strategy notes
   'weight.native': {

@@ -1,10 +1,9 @@
 /* vram/estimate.js — Dynamic VRAM estimator
  * ------------------------------------------------------------
  * Math model (Spec §4):
- *   Vtotal = Vweights + Vkv_cache + Voverhead
+ *   Vtotal = Vweights + Vkv_cache
  *   Vweights = Σparams × B_precision / 1024^3
  *   Vkv_cache = Σ verified Architecture Profile buffer bytes / 1024^3
- *   Voverhead = 2.0 + Vweights × 10%
  *
  * KV Cache is fail-closed. A curated model-class catalog selects Architecture
  * Profile candidates; every candidate validates its full config+safetensors
@@ -188,12 +187,10 @@ export function estimateVRAM(
   const kvNote = kv.note || '';
   const kvUnknown = !!kv.kvUnknown;
 
-  const vOverhead = 2.0 + vWeights * 0.1;
   const complete = !kvUnknown && Number.isFinite(vKV);
-  const vTotal = complete ? vWeights + vKV + vOverhead : null;
+  const vTotal = complete ? vWeights + vKV : null;
 
-  // Overview composition: sum weights by Tensor Name Pattern, then add
-  // KV / overhead.
+  // Overview composition: sum weights by Tensor Name Pattern, then add KV.
   const composition = [];
   if (w) {
     for (const [key, bytes] of w.byTensorNamePattern) {
@@ -203,7 +200,6 @@ export function estimateVRAM(
     composition.push({ key: 'weight', labelKey: 'cat.weight', colorKey: 'weight', group: 'weight', gb: vWeights });
   }
   if (complete) composition.push({ key: 'kv', labelKey: 'cat.kv', colorKey: 'kv', group: 'kv', gb: vKV });
-  composition.push({ key: 'overhead', labelKey: 'cat.overhead', colorKey: 'overhead', group: 'overhead', gb: vOverhead });
   composition.sort((a, b) => b.gb - a.gb || a.key.localeCompare(b.key));
 
   // Chart decomposition (already uses per-tensor effective bytes).
@@ -221,14 +217,12 @@ export function estimateVRAM(
     vKV,
     kvUnknown,
     kvNote,
-    vOverhead,
     vTotal,
     composition,
     breakdown: {
       baseWeightsGB,
       moeWeightsGB,
       kvGB: vKV,
-      overheadGB: vOverhead,
     },
   };
 }

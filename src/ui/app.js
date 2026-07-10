@@ -89,7 +89,10 @@ function buildLayout() {
       <h2>${esc(t('ov.title'))}</h2>
       <div class="summary-grid" id="stats"><div class="empty">${esc(t('ctl.empty'))}</div></div>
       <div class="overview-chart" tabindex="0" aria-label="${esc(t('ov.title'))}">
-        <div class="overview-chart-content"><canvas id="chart"></canvas></div>
+        <div class="overview-chart-content">
+          <div class="overview-chart-keys" role="list"></div>
+          <div class="overview-chart-plot"><canvas id="chart"></canvas></div>
+        </div>
       </div>
       <h3 class="overview-section-title">${esc(t('ov.kvTitle'))}</h3>
       <div id="kvdetails" class="kv-details"><div class="empty">${esc(t('ctl.empty'))}</div></div>
@@ -152,7 +155,7 @@ export function mountApp(rootEl) {
     summaryEl.style.display = '';
     const profile = est.kvProfile;
     summaryEl.innerHTML = `
-      <div class="hw-note" style="font-size:13px">${esc(t('sum.total'))}<b>${fmtGB(est.vTotal)}</b> ｜ ${esc(t('sum.weights'))} ${fmtGB(est.vWeights)} ｜ KV ${est.kvUnknown ? '—' : fmtGB(est.vKV)} ｜ ${esc(t('sum.overhead'))} ${fmtGB(est.vOverhead)}</div>
+      <div class="hw-note" style="font-size:13px">${esc(t('sum.total'))}<b>${fmtGB(est.vTotal)}</b> ｜ ${esc(t('sum.weights'))} ${fmtGB(est.vWeights)} ｜ KV ${est.kvUnknown ? '—' : fmtGB(est.vKV)}</div>
       ${est.weightNote ? `<div class="hw-note">${esc(t('sum.weightStrategy'))}${esc(est.weightNote)}</div>` : ''}
       ${profile ? `<div class="hw-note">${esc(t('sum.kvProfile'))}<span class="tag profile">${esc(profile.label)}</span> ｜ ${esc(t('sum.kvLayout'))}${esc(profile.layout.id)}@${esc(profile.layout.version)}</div>` : `<div class="hw-note incomplete">${esc(t('kv.totalUnknown'))}</div>`}
       ${est.kvNote ? `<div class="hw-note dsa-note">${esc(est.kvNote)}</div>` : ''}

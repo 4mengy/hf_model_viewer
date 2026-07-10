@@ -48,7 +48,10 @@ test('Verified Profile details flow through the complete VRAM Estimate and ignor
   assert.equal(fp16.kvBuffers.reduce((sum, buffer) => sum + buffer.bytes, 0), 95_232);
   assert.equal(fp16.vKV, 95_232 / (1024 ** 3));
   assert.equal(int4.vKV, fp16.vKV);
-  assert.ok(Number.isFinite(fp16.vTotal));
+  assert.equal(fp16.vTotal, fp16.vWeights + fp16.vKV);
+  assert.equal('vOverhead' in fp16, false);
+  assert.equal('overheadGB' in fp16.breakdown, false);
+  assert.equal(fp16.composition.some((item) => item.key === 'overhead'), false);
 });
 
 test('Complete VRAM Estimate forwards ragged sequence lengths to the Profile', () => {
@@ -89,6 +92,7 @@ test('weight composition merges Tensor Name Patterns and sorts them by size', ()
   );
 
   const weights = result.composition.filter((item) => item.group === 'weight');
+  assert.equal(result.composition.some((item) => item.key === 'overhead'), false);
   assert.deepEqual(
     weights.map((item) => [item.label, item.gb]),
     [

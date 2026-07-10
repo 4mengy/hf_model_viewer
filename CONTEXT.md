@@ -33,7 +33,7 @@ All KV Cache data that model semantics require to remain GPU-resident for a spec
 _Avoid_: Framework allocation, CUDA reserved memory
 
 **Complete VRAM Estimate**:
-A total VRAM result available only when weights, a Verified KV Cache Payload, and fixed overhead are all known; if any required component is unknown, the total must remain unknown.
+A total VRAM result available only when weights and a Verified KV Cache Payload are both known; if either required component is unknown, the total must remain unknown.
 _Avoid_: Treating unknown KV as zero, partial total VRAM
 
 **Architecture Layout Catalog**:
