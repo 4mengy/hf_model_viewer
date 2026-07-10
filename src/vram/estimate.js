@@ -19,7 +19,6 @@ const BPP = { fp16: 2, bf16: 2, int8: 1, int4: 0.5 };
 import { computeKV } from './kv/index.js';
 import { tensorParams } from '../tree/buildTree.js';
 import { isNumericPathSegment } from '../tree/pathSegments.js';
-import { t } from '../i18n.js';
 
 export function bytesPerParam(precision) {
   return BPP[precision] ?? 2;
@@ -51,11 +50,6 @@ export function bytesForDtype(dtype, fallback = 2) {
     if (/64/.test(dtype)) return 8;
   }
   return fallback;
-}
-
-/** Protected tensor: not quantized when strategy is "keep-fp16". */
-function isProtectedTensor(name) {
-  return /embed_tokens|lm_head|norm/i.test(name);
 }
 
 /* ------------------------------------------------------------
@@ -92,23 +86,13 @@ function tensorNamePattern(name) {
 }
 
 /**
- * Effective bytes/param for a single tensor — combining on-disk dtype and
- * quantization strategy:
- *   - native:       use on-disk dtype directly (slider ignored; real file size)
- *   - keep-fp16:    protected tensors (Embedding/Norm/LMHead) stay ≥FP16;
- *                   others take min(native, target)
- *   - uniform:      all tensors take min(native, target) — simulates quant but
- *                   respects already pre-quantized weights
- * Core: min(native, target) guarantees "already FP4 stays FP4" — never inflated
- * or doubly compressed by the slider.
+ * Effective bytes/param for a single tensor. The precision selector simulates
+ * quantization for full-precision tensors, while pre-quantized tensors keep
+ * their smaller on-disk footprint.
  */
-function effBppFor(t, { targetPrecision, strategy }) {
+function effBppFor(t, { targetPrecision }) {
   const nativeB = bytesForDtype(t.dtype, 2);
   const targetB = BPP[targetPrecision] ?? 2;
-  if (strategy === 'native') return nativeB;
-  if (strategy === 'keep-fp16' && isProtectedTensor(t.name)) {
-    return nativeB > 2 ? 2 : nativeB; // keep FP16 or better
-  }
   return Math.min(nativeB, targetB);
 }
 
@@ -164,17 +148,17 @@ export function estimateVRAM(
   tree,
   {
     precision = 'fp16', batch = 1, seq = 8192, sequenceLengths = null,
-    tensors = null, strategy = 'uniform',
+    tensors = null,
   } = {},
 ) {
   const bpp = bytesPerParam(precision);
   const totalParams = tree.totalParams;
 
-  // Weight VRAM: prefer per-tensor on-disk dtype + quantization strategy.
-  // (On-disk precision is the ground truth; the slider only simulates quant on
-  // full-precision tensors, pre-quantized layers use the on-disk value.)
-  const w = tensors && tensors.length ? computeWeightBytes(tensors, { targetPrecision: precision, strategy }) : null;
-  let vWeights, baseWeightsGB, moeWeightsGB, weightNote;
+  // Weight VRAM: prefer per-tensor on-disk dtype. The slider only simulates
+  // quantization on full-precision tensors; pre-quantized layers use their
+  // smaller on-disk value.
+  const w = tensors && tensors.length ? computeWeightBytes(tensors, { targetPrecision: precision }) : null;
+  let vWeights, baseWeightsGB, moeWeightsGB;
   if (w) {
     vWeights = w.totalBytes / GB;
     baseWeightsGB = w.baseBytes / GB;
@@ -185,14 +169,6 @@ export function estimateVRAM(
     baseWeightsGB = (tree.baseParams * bpp) / GB;
     moeWeightsGB = (tree.expertParams * bpp) / GB;
   }
-  if (strategy === 'native') {
-    weightNote = t('weight.native');
-  } else if (strategy === 'keep-fp16') {
-    weightNote = t('weight.keepFp16');
-  } else {
-    weightNote = t('weight.uniform');
-  }
-
   const kv = computeKV({ config, tensors, batch, seq, sequenceLengths });
   const vKV = kv.vKV;
   const kvNote = kv.note || '';
@@ -228,7 +204,6 @@ export function estimateVRAM(
     bpp,
     totalParams,
     vWeights,
-    weightNote,
     vKV,
     kvUnknown,
     kvNote,

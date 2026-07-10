@@ -30,23 +30,6 @@ const STR = {
   'ctl.advanced': { zh: '高级（受限模型可选 Token）', en: 'Advanced (token for gated models)' },
   'ctl.tokenPlaceholder': { zh: 'hf_xxx（私有/受限仓库时填写）', en: 'hf_xxx (for private / gated repos)' },
   'ctl.quantPrecision': { zh: '量化精度', en: 'Quantization precision' },
-  'ctl.quantStrategy': { zh: '量化策略', en: 'Quantization strategy' },
-  'ctl.stratUniform': {
-    zh: '均匀量化（全部张量按精度滑杆）',
-    en: 'Uniform (all tensors to selected precision)',
-  },
-  'ctl.stratKeepFp16': {
-    zh: '仅 Linear 量化（Embedding/Norm/LM Head 保留 FP16）',
-    en: 'Linear only (Embedding/Norm/LM Head stay FP16)',
-  },
-  'ctl.stratNative': {
-    zh: '按磁盘实际精度（忽略滑杆，含预量化）',
-    en: 'Native on-disk dtype (ignore slider, incl. pre-quantized)',
-  },
-  'ctl.quantHint': {
-    zh: '权重显存以磁盘 dtype 为真值：已预量化模型（如 FP4/INT4）直接按实际占用计。',
-    en: 'Weight VRAM uses on-disk dtype as ground truth: pre-quantized models (e.g. FP4/INT4) count at actual size.',
-  },
   'ctl.batchSize': { zh: 'Batch Size：', en: 'Batch Size: ' },
   'ctl.contextLength': { zh: '上下文长度', en: 'Context Length' },
 
@@ -61,7 +44,6 @@ const STR = {
   'sum.total': { zh: '总显存需求：', en: 'Total VRAM: ' },
   'sum.weights': { zh: '权重', en: 'Weights' },
   'sum.kv': { zh: 'KV', en: 'KV' },
-  'sum.weightStrategy': { zh: '权重策略：', en: 'Weight strategy: ' },
   'sum.kvProfile': { zh: '模型架构档案：', en: 'Architecture Profile: ' },
   'sum.kvLayout': { zh: 'KV 布局：', en: 'KV layout: ' },
 
@@ -134,20 +116,6 @@ const STR = {
   'cat.sharedExpert': { zh: '共享专家（始终激活）', en: 'Shared expert (always active)' },
   'cat.weight': { zh: '权重（未细分）', en: 'Weights (unsplit)' },
   'cat.kv': { zh: 'KV Cache', en: 'KV Cache' },
-
-  // Weight strategy notes
-  'weight.native': {
-    zh: '权重按磁盘实际 dtype 逐张量计算（已含任何预量化，滑杆精度不生效）',
-    en: 'Weights counted per-tensor at on-disk dtype (incl. any pre-quantization; slider precision ignored)',
-  },
-  'weight.keepFp16': {
-    zh: '仅 Linear 量化到目标精度；Embedding / Norm / LM Head 保留 FP16',
-    en: 'Only Linear quantized to target precision; Embedding / Norm / LM Head stay FP16',
-  },
-  'weight.uniform': {
-    zh: '全模型均匀量化到目标精度；已预量化层按磁盘实际精度计（不重复压缩）',
-    en: 'Whole model uniformly quantized to target precision; pre-quantized layers counted at on-disk dtype (no double compression)',
-  },
 
   // Errors (user-facing)
   'err.noSafetensors': {

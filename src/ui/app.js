@@ -56,16 +56,6 @@ function buildLayout() {
     </div>
 
     <div class="field">
-      <label>${esc(t('ctl.quantStrategy'))}</label>
-      <select id="qstrat">
-        <option value="uniform">${esc(t('ctl.stratUniform'))}</option>
-        <option value="keep-fp16">${esc(t('ctl.stratKeepFp16'))}</option>
-        <option value="native">${esc(t('ctl.stratNative'))}</option>
-      </select>
-      <p class="hint">${esc(t('ctl.quantHint'))}</p>
-    </div>
-
-    <div class="field">
       <label>${esc(t('ctl.batchSize'))}<span class="bubble" id="batchVal">1</span></label>
       <input type="range" id="batch" min="1" max="128" value="1" />
     </div>
@@ -116,14 +106,9 @@ export function mountApp(rootEl) {
     return el ? el.value : 'fp16';
   }
 
-  function getStrategy() {
-    const el = $('qstrat');
-    return el ? el.value : 'uniform';
-  }
-
   // Effective per-parameter bytes for every tensor (matches the calculator).
   function buildEffMap() {
-    return buildEffBppMap(state.tensors, { targetPrecision: getPrecision(), strategy: getStrategy() });
+    return buildEffBppMap(state.tensors, { targetPrecision: getPrecision() });
   }
 
   function setStatus(msg, kind = '') {
@@ -143,7 +128,6 @@ export function mountApp(rootEl) {
       batch,
       seq,
       tensors: state.tensors,
-      strategy: getStrategy(),
     });
 
     renderChart($('chart'), est);
@@ -156,7 +140,6 @@ export function mountApp(rootEl) {
     const profile = est.kvProfile;
     summaryEl.innerHTML = `
       <div class="hw-note" style="font-size:13px">${esc(t('sum.total'))}<b>${fmtGB(est.vTotal)}</b> ｜ ${esc(t('sum.weights'))} ${fmtGB(est.vWeights)} ｜ KV ${est.kvUnknown ? '—' : fmtGB(est.vKV)}</div>
-      ${est.weightNote ? `<div class="hw-note">${esc(t('sum.weightStrategy'))}${esc(est.weightNote)}</div>` : ''}
       ${profile ? `<div class="hw-note">${esc(t('sum.kvProfile'))}<span class="tag profile">${esc(profile.label)}</span> ｜ ${esc(t('sum.kvLayout'))}${esc(profile.layout.id)}@${esc(profile.layout.version)}</div>` : `<div class="hw-note incomplete">${esc(t('kv.totalUnknown'))}</div>`}
       ${est.kvNote ? `<div class="hw-note dsa-note">${esc(est.kvNote)}</div>` : ''}
     `;
@@ -313,7 +296,6 @@ export function mountApp(rootEl) {
     );
 
     rootEl.querySelectorAll('input[name="q"]').forEach((r) => r.addEventListener('change', recompute));
-    $('qstrat').addEventListener('change', recompute);
 
     rootEl.querySelectorAll('.lang-btn').forEach((b) =>
       b.addEventListener('click', () => setLang(b.dataset.lang)),

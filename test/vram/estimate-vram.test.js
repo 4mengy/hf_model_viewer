@@ -32,7 +32,7 @@ test('Complete VRAM Estimate stays unknown when KV Cache is unsupported', () => 
   });
 });
 
-test('Verified Profile details flow through the complete VRAM Estimate and ignore weight precision', () => {
+test('Verified Profile details flow through the complete VRAM Estimate', () => {
   const fixture = glm52Fixture();
   const tree = { totalParams: 1, baseParams: 1, expertParams: 0 };
   const fp16 = estimateVRAM(fixture.config, tree, {
@@ -52,6 +52,7 @@ test('Verified Profile details flow through the complete VRAM Estimate and ignor
   assert.equal('vOverhead' in fp16, false);
   assert.equal('overheadGB' in fp16.breakdown, false);
   assert.equal(fp16.composition.some((item) => item.key === 'overhead'), false);
+  assert.equal('weightNote' in fp16, false);
   assert.deepEqual(fp16.composition.find((item) => item.key === 'kv').dtypes, ['BF16']);
 });
 

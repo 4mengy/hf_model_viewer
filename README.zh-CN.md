@@ -11,7 +11,6 @@
 - **已验证 KV Cache 档案** — 使用精确的模型类标识选择人工审核的候选档案，并验证完整配置和 safetensors 元数据签名。未知模型会安全失败，不使用通用公式猜测。
 - **首批专用布局** — GLM 5.2 IndexShare、DeepSeek V4 Pro HCA/CSA（包含 indexer 和 compressor state），以及 Hy3 full-context GQA。每个档案拥有一套完整的专用布局。
 - **可审计明细** — 展示 Profile/layout 版本，以及每类 buffer 的层组、元素数、DType、字节数、公式和固定 revision 证据。
-- **按模块量化策略** — `uniform`（全部量化）、`keep-fp16`（仅 Linear）和 `native`（使用磁盘 DType）。已预量化权重会保持原始精度，例如 FP4 仍按 FP4 计算。
 - **细粒度组成** — 总览按张量类别拆分显存，包括 Embedding、Attention、MLP、Norm、LM Head、MoE 路由专家和共享专家，并叠加 KV。共享专家（始终激活，每层恰好一个）与路由专家（×N，每个 token 只激活少量专家）会明确区分。
 - **双形态发布** — 同一份源码同时构建为 GitHub Pages 静态站点和浏览器扩展。
 - **双语界面** — Web 应用和浏览器扩展均支持一键切换中文与英语，并在本地保存语言偏好。

@@ -143,16 +143,6 @@ html, body {
   font-weight: 700;
 }
 
-select#qstrat {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: #fff;
-  font-size: 13px;
-  color: var(--text);
-  cursor: pointer;
-}
 .hint {
   margin: 6px 0 0;
   font-size: 11px;
