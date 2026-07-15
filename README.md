@@ -74,14 +74,3 @@ npm run dev        # local dev server
 npm run build      # build static site -> dist-web/
 npm test           # run test suite
 ```
-
-### Deploy to GitHub Pages
-
-Pushed commits deploy automatically via GitHub Actions (`.github/workflows/deploy.yml`):
-
-```bash
-git push -u origin main
-```
-
-Then in the repo `Settings → Pages → Source` choose **GitHub Actions**. Site URL:
-`https://<user>.github.io/hf_view/`

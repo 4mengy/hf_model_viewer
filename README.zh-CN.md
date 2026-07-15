@@ -74,14 +74,3 @@ npm run dev        # 本地开发服务器
 npm run build      # 构建静态站点 -> dist-web/
 npm test           # 运行测试套件
 ```
-
-### 部署到 GitHub Pages
-
-推送提交后，GitHub Actions 会通过 `.github/workflows/deploy.yml` 自动部署：
-
-```bash
-git push -u origin main
-```
-
-随后在仓库 `Settings → Pages → Source` 中选择 **GitHub Actions**。站点地址：
-`https://<user>.github.io/hf_view/`
